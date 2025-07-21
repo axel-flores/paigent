@@ -15,6 +15,18 @@ class Calculator:
             "/": 2,
         }
 
+    def _apply_operator(self, operators, values):
+        if not operators:
+            return
+
+        operator = operators.pop()
+        if len(values) < 2:
+            raise ValueError(f"not enough operands for operator {operator}")
+
+        b = values.pop()
+        a = values.pop()
+        values.append(self.operators[operator](a, b))
+
     def evaluate(self, expression):
         if not expression or expression.isspace():
             return None
@@ -48,14 +60,4 @@ class Calculator:
 
         return values[0]
 
-    def _apply_operator(self, operators, values):
-        if not operators:
-            return
-
-        operator = operators.pop()
-        if len(values) < 2:
-            raise ValueError(f"not enough operands for operator {operator}")
-
-        b = values.pop()
-        a = values.pop()
-        values.append(self.operators[operator](a, b))
+    

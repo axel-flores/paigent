@@ -4,10 +4,18 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from functions.get_files_info import schema_get_files_info
+from prompts import system_prompt
 
 def main():
     load_dotenv()  # Load environment variables from .env file
-    print("Hello from paigent!")
+    # print("Hello from paigent!")
+   
+    available_functions = types.Tool(
+        function_declarations=[
+            schema_get_files_info,
+        ]
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument('user_prompt', help='prompt o instrucciones a realizar')
@@ -27,7 +35,11 @@ def main():
         ]
 
         response = client.models.generate_content(
-            model='gemini-2.0-flash-001', contents=messages
+            model='gemini-2.0-flash-001', contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions],
+                system_instruction=system_prompt
+                )
         )
 
         if args.verbose:
@@ -35,7 +47,12 @@ def main():
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         
-        print(response.text)
+        if response.function_calls:  # más pythónico que len() > 0
+            for call in response.function_calls:
+                print(f"Calling function: {call.name}({call.args})")
+        else:
+            print(response.text)
+
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)

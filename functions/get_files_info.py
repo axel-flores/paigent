@@ -1,5 +1,20 @@
 import os
+from google.genai import types
 from config import MAX_CHARS
+
+schema_get_files_info = types.FunctionDeclaration(
+    name="get_files_info",
+    description="Lists files in the specified directory along with their sizes, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "directory": types.Schema(
+                type=types.Type.STRING,
+                description="The directory to list files from, relative to the working directory. If not provided, lists files in the working directory itself.",
+            ),
+        },
+    ),
+)
 
 def get_files_info(working_directory, directory="."):
     full_path = os.path.join(working_directory, directory)
@@ -25,49 +40,6 @@ def get_files_info(working_directory, directory="."):
 
     return content_string
 
-def get_file_content(working_directory, file_path):
-    full_path = os.path.join(working_directory, file_path)
-
-    working_abs = os.path.abspath(working_directory)
-    target_abs = os.path.abspath(full_path)
-
-    rel_path = os.path.relpath(target_abs, working_abs)
-
-    if rel_path.startswith('..'):
-        return f'Error: Cannot read "{file_path}" as it is outside the permitted working directory'
-    
-    if not os.path.isfile(full_path):
-        return f'Error: File not found or is not a regular file: "{file_path}"'
-    
-    try:
-        with open(full_path, "r") as f:
-            file_content_string = f.read(MAX_CHARS)
-    except Exception as e:
-        return f'Error: {e}'
-
-    return file_content_string
-
-
-def write_file(working_directory, file_path, content):
-    full_path = os.path.join(working_directory, file_path)
-
-    working_abs = os.path.abspath(working_directory)
-    target_abs = os.path.abspath(full_path)
-
-    rel_path = os.path.relpath(target_abs, working_abs)
-
-    if rel_path.startswith('..'):
-        return f'Error: Cannot read "{file_path}" as it is outside the permitted working directory'
-    
-    if not os.path.exists(os.path.dirname(full_path)):
-        return f'Error: Directory does not exist: "{os.path.dirname(full_path)}"'
-
-    try:
-        with open(full_path, "w") as f:
-            f.write(content)
-        return f'Successfully wrote to "{file_path}" ({len(content)} characters written)'
-    except Exception as e:
-        return f'Error: {e}'
 
     # os.path.abspath(): Get an absolute path from a relative path
     # os.path.join(): Join two paths together safely (handles slashes)
